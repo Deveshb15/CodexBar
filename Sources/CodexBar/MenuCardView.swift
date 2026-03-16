@@ -686,11 +686,20 @@ extension UsageMenuCardView.Model {
     }
 
     static func make(_ input: Input) -> UsageMenuCardView.Model {
-        let planText = Self.plan(
-            for: input.provider,
-            snapshot: input.snapshot,
-            account: input.account,
-            metadata: input.metadata)
+        let planText: String? = {
+            let base = Self.plan(
+                for: input.provider,
+                snapshot: input.snapshot,
+                account: input.account,
+                metadata: input.metadata)
+            guard let promo = PromotionStatus.check(provider: input.provider, now: input.now) else {
+                return base
+            }
+            if let plan = base {
+                return "\(plan) · \(promo.badge)"
+            }
+            return promo.badge
+        }()
         let metrics = Self.metrics(input: input)
         let usageNotes = Self.usageNotes(input: input)
         let creditsText: String? = if input.provider == .openrouter {
